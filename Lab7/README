@@ -1,0 +1,15 @@
+a) Team Members:
+Arun Ganesh, Nikhil Nagarajan, Garrett Ravatt
+
+b) Compilation/Runtime Instructions:
+Setting up Environmental Variables
+
+$ export CLASSPATH=$CLASSPATH:mysql-connector-java-8.0.16.jar:.
+$ export HP_JDBC_URL=jdbc:mysql://db.labthreesixfive.com/your_username_here?autoReconnect=true\&useSSL=false
+$ export HP_JDBC_USER=<username>
+$ export HP_JDBC_PW=<pwd>
+$ cd lab7_JDBC
+$ javac InnReservations.java
+$ java InnReservations
+
+c) Known bugs and deficiences:
