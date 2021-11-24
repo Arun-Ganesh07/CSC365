@@ -59,7 +59,7 @@ public class InnReservations {
         System.out.println("Welcome to the reservation system");
         System.out.println("1. List popular rooms");
         System.out.println("2. Make a reservation");
-        System.out.println("3. Alter a reservation");
+        System.out.println("3. Change a reservation");
         System.out.println("4. Cancel a reservation");
         System.out.println("5. View reservation details");
         System.out.println("6. List monthly revenue");
@@ -77,7 +77,7 @@ public class InnReservations {
                     FR1();
                     break;
 //                case "2":
-//                    i.FR2();
+//                    FR2();
 //                    break;
                 case "3":
                     FR3();
@@ -110,13 +110,14 @@ public class InnReservations {
                 "    select \n" + "    Room,\n" +
                 "    SUM(DateDiff(Checkout,\n" +
                 "    case \n" +
-                "        when CheckIn >=  Current_Date - interval 180 day\n" +
+                "        when CheckIn >=  curdate() - interval 180 day\n" +
                 "        then CheckIn\n" +
-                "        else Current_Date - interval 180 day\n" +
+                "        else CheckIn = 0\n" +
                 "    end\n" +
                 "    )) as DaysOccupied\n" +
                 "    from lab7_reservations\n" +
-                "    where CheckOut > Current_Date - interval 180 day\n" +
+                "    join lab7_rooms on Room = RoomCode\n" +
+                "    where CheckOut > curdate() - interval 180 day\n" +
                 "    group by Room\n" +
                 "),\n" +
                 "MostRecentReservation as (\n" +
@@ -124,7 +125,7 @@ public class InnReservations {
                 "    MAX(CheckIn) as MostRecentCheckin,\n" +
                 "    MAX(Checkout) as MostRecentCheckout\n" +
                 "    from lab7_reservations\n" +
-                "    where CheckOut <= Current_Date\n" +
+                "    where CheckIn <= curdate()\n" +
                 "    group by Room\n" +
                 "),\n" +
                 "FirstAvailables as (\n" +
@@ -133,14 +134,14 @@ public class InnReservations {
                 "   Case\n" +
                 "    When not exists (\n" +
                 "     select * from lab7_reservations r2\n" +
-                "     where r1.Room = r2.Room\n" +
-                "     and CheckIn <= Current_Date\n" +
-                "     and CheckOut > Current_Date\n" +
+                "     where r2.Room = r1.Room\n" +
+                "     and CheckIn <= curdate()\n" +
+                "     and CheckOut > curdate()\n" +
                 "    )\n" +
-                "    then Current_Date\n" +
+                "    then curdate()\n" +
                 "    else (\n" +
                 "       select MIN(CheckOut) from lab7_reservations r2\n" +
-                "       where CheckOut > CURRENT_DATE\n" +
+                "       where CheckOut > curdate()\n" +
                 "       and r2.Room = r1.Room\n" +
                 "       and not exists (\n" +
                 "        select Room from lab7_reservations r3 \n" +
@@ -160,9 +161,8 @@ public class InnReservations {
                 "maxOcc,\n" +
                 "basePrice,\n" +
                 "decor,\n" +
-                "-- new info\n" +
                 "ROUND(DaysOccupied / 180, 2) as Popularity,\n" +
-                "FirstAvailable,\n" +
+                "DATE_ADD(MostRecentCheckout, interval 1 day) as FirstAvailable,\n" +
                 "DATEDIFF(MostRecentCheckout,MostRecentCheckin) as LastStayLength,\n" +
                 "MostRecentCheckout\n" +
                 "from MostRecentReservation\n" +
@@ -359,7 +359,8 @@ public class InnReservations {
                     conn.rollback();
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
 
