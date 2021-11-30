@@ -57,10 +57,18 @@ public class FR2 {
         }
     }
 
-    private void option(){
+    private void option() throws SQLException{
+        System.out.println("---Available Room Options---");
+        for (int i=0; i < availRooms.size(); i++){
+            System.out.println(String.valueOf(i) + ": " + availRooms.get(i).toString());
+        }
+        reserve(availRooms.get(sc.nextInt()));
     }
 
+    //if rooms would be valid for reservation, returns them as objects
     private boolean available() throws SQLException {
+        boolean roomAny = false;
+        boolean bedAny = false;
         try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
                 System.getenv("HP_JDBC_USER"),
                 System.getenv("HP_JDBC_PW"))) {
@@ -68,22 +76,37 @@ public class FR2 {
             String dncs = "SELECT DISTINCT * FROM " +
                     ROOMS_TABLE +
                     "WHERE " +
-                    "roomCode = ? AND " +
-                    "bedType = ? AND " +
+                    "maxOcc >= ?" +
                     "NOT EXISTS" +
                     "(SELECT * FROM" + ROOMS_TABLE + "JOIN "+ RESERVATIONS_TABLE+" ON RoomId=Room " +
                     "   WHERE NOT (checkIn BETWEEN ? AND ?) AND NOT (checkOut BETWEEN ? AND ?)" +
                     ")";
+            if (!roomCode.toLowerCase().equals("any")){
+                dncs = dncs + " AND roomCode = ?";
+                roomAny=true;
+            }
+            if (!bedType.toLowerCase().equals("any")){
+                dncs = dncs + " AND bedType = ?";
+                bedAny=true;
+            }
 
             // dates non-conflicting prepared statement
             try (PreparedStatement dncsps = conn.prepareStatement(dncs)) {
+                dncsps.setInt(1,nChildren+nAdults);
+                dncsps.setDate(2, java.sql.Date.valueOf(checkIn));
+                dncsps.setDate(3, java.sql.Date.valueOf(checkOut));
+                dncsps.setDate(4, java.sql.Date.valueOf(checkIn));
+                dncsps.setDate(5, java.sql.Date.valueOf(checkOut));
 
-                dncsps.setString(1, roomCode);
-                dncsps.setString(2, bedType);
-                dncsps.setDate(3, java.sql.Date.valueOf(checkIn));
-                dncsps.setDate(4, java.sql.Date.valueOf(checkOut));
-                dncsps.setDate(5, java.sql.Date.valueOf(checkIn));
-                dncsps.setDate(6, java.sql.Date.valueOf(checkOut));
+                if (!roomAny){
+                    dncsps.setString(6, roomCode);
+                    if (!bedAny){
+                        dncsps.setString(7, bedType);
+                    }
+                }
+                else if (!bedAny){
+                    dncsps.setString(6, bedType);
+                }
 
                 try (ResultSet rs = dncsps.executeQuery()) {
                     while (rs.next()) {
@@ -99,8 +122,63 @@ public class FR2 {
 
     }
     private void closeAvailable() throws SQLException {
-
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
+                System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
+            String ps = "SELECT * FROM "+RESERVATIONS_TABLE+
+                    " ";
+        }
     }
+    //checks if the room is available on this day
+    private boolean dateCheck(LocalDate date) throws SQLException {
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
+                System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
+            String s = "SELECT * FROM " + RESERVATIONS_TABLE +
+                    " WHERE" +
+                    " ? BETWEEN checkIn AND checkOut";
+            try (PreparedStatement ps = conn.prepareStatement(s)) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    return !rs.next();
+                }
+            }
+        }
+    }
+
+    //TODO: return max resCode + 1 using DBMS
+    private int newReservationCode(){
+        return 0;
+    }
+
+    private void reserve(Room choiceRoom) throws SQLException{
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
+                System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
+            // dates non-conflicting string
+            String r = "INSERT INTO" +
+                    RESERVATIONS_TABLE +
+                    "(CODE, Room, CheckIn, Checkout, Rate, LastName, FirstName, Adults, Kids) " +
+                    "VALUES " +
+                    "(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            // dates non-conflicting prepared statement
+            try (PreparedStatement rPS = conn.prepareStatement(r)) {
+                rPS.setInt(1, 0);
+                rPS.setString(2,choiceRoom.RoomCode);
+                rPS.setDate(3,java.sql.Date.valueOf(checkIn));
+                rPS.setDate(4,java.sql.Date.valueOf(checkOut));
+                rPS.setFloat(5,choiceRoom.basePrice);
+                rPS.setString(6,lastname);
+                rPS.setString(7,firstname);
+                rPS.setInt(8,nAdults);
+                rPS.setInt(9,nChildren);
+
+                rPS.executeQuery();
+            }
+        }
+    }
+
+
 
     private void userInput() {
             System.out.println("firstname: ");
