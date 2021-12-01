@@ -12,4 +12,21 @@ $ cd lab7_JDBC
 $ javac InnReservations.java
 $ java InnReservations
 
+WINDOWS:
+- download jar file
+- add system environmental variables to PC
+    HP_JDBC_PW
+    - lab365password
+    HP_JDBC_URL
+    - jdbc:mysql://db.labthreesixfive.com/calpolyusername?autoReconnect=true&useSSL=false
+    HP_JDBC_USER
+    - calpolyusername
+ - after setting up go to command prompt:
+   a) javac InnReservations.java
+  
+   b) java -cp mysql-connector-java-8.0.16.jar;. InnReservations
+
+ 
 c) Known bugs and deficiences:
+- We have only run this program on Windows and not sure how it will run on Linux.
+- FR2 has some bugs
