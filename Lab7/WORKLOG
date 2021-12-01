@@ -14,6 +14,6 @@ Nikhil Nagarajan
 
 Garrett Ravatt
 - Completed FR4
-- Completed majority of FR2, excepting similar reservations and confirmation screen
+- Completed majority of FR2, except confirmation screen
 - Defined data types with ResultSet constructors for Room and Reservation
 - Defined toString methods for new types based on existing print functions by Arun
