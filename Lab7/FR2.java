@@ -34,6 +34,7 @@ public class FR2 {
     private Connection conn;
     Scanner sc = new Scanner(System.in);
 
+    int code;
     private String firstname;
     private String lastname;
     private String roomCode;
@@ -44,9 +45,10 @@ public class FR2 {
     private int nAdults;
 
     private List<Room> availRooms; //Rooms that fit request
-    private List<Room> closeRooms; //Rooms that are close
+    private List<Reservation> closeRes; //Reservations that are close
 
     public void makeReservation() throws SQLException {
+        code = newReservationCode();
         userInput(); //fill the fillable fields
         if (available()){
             option();
@@ -122,13 +124,60 @@ public class FR2 {
 
     }
     private void closeAvailable() throws SQLException {
-        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-                System.getenv("HP_JDBC_USER"),
-                System.getenv("HP_JDBC_PW"))) {
-            String ps = "SELECT * FROM "+RESERVATIONS_TABLE+
-                    " ";
+        String ps = "SELECT CheckOut O, Room R, * FROM "+RESERVATIONS_TABLE+" WHERE" +
+                    " O >= ?"+
+                    " NOT EXISTS (SELECT * FROM "+RESERVATIONS_TABLE+" WHERE" +
+                    "    DATEDIFF(checkIn,O)=1) AND R=roomCode";
+
+        try (PreparedStatement pps = conn.prepareStatement(ps)) {
+            pps.setDate(1, java.sql.Date.valueOf(checkIn));
+            try (ResultSet rs = pps.executeQuery()) {
+                while (rs.next()) {
+                    //TODO: offset set checkIn time one day forward
+                    closeRes.add(new Reservation(code, rs.getString("R"),
+                            LocalDate.parse(rs.getString("O")),
+                            maxResDate(LocalDate.parse(rs.getString("O")),rs.getString("R")),
+                            rs.getFloat("Rate"),
+                            lastname,
+                            firstname,
+                            nAdults,
+                            nChildren
+                            ));
+                }
+                while (closeRes.size()<5){
+                    //TODO: make copies of the last reservation in closeRes
+                    // incrementing the checkOut date until there are 5
+                }
+            }
         }
     }
+    private LocalDate maxResDate(LocalDate start, String room) throws SQLException{
+        String ps = "SELECT checkIn from "+RESERVATIONS_TABLE+" WHERE" +
+                " room = ?" +
+                " checkIn > ? AND" +
+                " checkIn <= ALL (SELECT checkIn from "+RESERVATIONS_TABLE+" WHERE" +
+                "   room = ? AND checkIn > ?)";
+
+        try (PreparedStatement pps = conn.prepareStatement(ps)) {
+            pps.setString(1, room);
+            pps.setDate(2, java.sql.Date.valueOf(start));
+            pps.setString(3, room);
+            pps.setDate(4, java.sql.Date.valueOf(start));
+
+            try (ResultSet rs = pps.executeQuery()) {
+                if (rs.next()) {
+                    //TODO: offset found date by 1 day earlier
+                    return LocalDate.parse(rs.getString("CheckIn"));
+                }
+                else{
+                    //TODO: increase start date by 3, or more if the
+                    // reservation exists in closeRes
+                    return start;
+                }
+            }
+        }
+    }
+
     //checks if the room is available on this day
     private boolean dateCheck(LocalDate date) throws SQLException {
         try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
@@ -170,7 +219,7 @@ public class FR2 {
 
             // dates non-conflicting prepared statement
             try (PreparedStatement rPS = conn.prepareStatement(r)) {
-                rPS.setInt(1, 0);
+                rPS.setInt(1, code);
                 rPS.setString(2,choiceRoom.RoomCode);
                 rPS.setDate(3,java.sql.Date.valueOf(checkIn));
                 rPS.setDate(4,java.sql.Date.valueOf(checkOut));
