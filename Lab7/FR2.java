@@ -145,9 +145,16 @@ public class FR2 {
         }
     }
 
-    //TODO: return max resCode + 1 using DBMS
-    private int newReservationCode(){
-        return 0;
+    //return max resCode + 1 using DBMS
+    private int newReservationCode() throws SQLException{
+        String s = "SELECT * FROM " + RESERVATIONS_TABLE +
+                " WHERE" +
+                " Code >= all Code";
+        try (PreparedStatement ps = conn.prepareStatement(s)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.getInt("Code") + 1;
+            }
+        }
     }
 
     private void reserve(Room choiceRoom) throws SQLException{
