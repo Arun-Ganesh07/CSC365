@@ -6,15 +6,14 @@ Arun Ganesh
 - Added README and WORKLOG
 - Completed FR1
 - Completed FR3
-- Implemented FR2 confirmation screen
 
 Nikhil Nagarajan
 - Completed FR5
 - Completed FR6
-- Helped implement FR2 confirmation screen (will remove this if I don't help)
+- Helped implement FR2 
 
 Garrett Ravatt
 - Completed FR4
-- Completed majority of FR2, except confirmation screen
+- Completed template of FR2
 - Defined data types with ResultSet constructors for Room and Reservation
 - Defined toString methods for new types based on existing print functions by Arun
