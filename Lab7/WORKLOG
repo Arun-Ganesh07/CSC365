@@ -1,14 +1,19 @@
 Arun Ganesh
 - Established working connection to db with jdbc and environment variables
 - Set up application structure, all necessary methods
-- Handled input prompting and parsing
+- Handled main input prompting and parsing
+- Defined initial print functions for room and reservation SQL data
 - Added README and WORKLOG
-- Defined data types and String representations for Room and Reservation
 - Completed FR1
 - Completed FR3
+- Implemented FR2 confirmation screen
 
 Nikhil Nagarajan
--
+- Completed FR5
+- Completed FR6
 
 Garrett Ravatt
--
+- Completed FR4
+- Completed majority of FR2, excepting similar reservations and confirmation screen
+- Defined data types with ResultSet constructors for Room and Reservation
+- Defined toString methods for new types based on existing print functions by Arun
